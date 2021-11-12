@@ -50,18 +50,20 @@ int main(int argc, char **argv) {
 
   Elf64_Ehdr *elf_header = (Elf64_Ehdr *) data;
 
+  // Check if opened file is ELF
   if (elf_header->e_ident[0] != 127 ||
       elf_header->e_ident[1] != 69 ||
       elf_header->e_ident[2] != 76 ||
-      elf_header->e_ident[3] != 70) {  // If not ELF, print message and exit normally
+      elf_header->e_ident[3] != 70) {  
     cout << "Not an ELF file" << endl;
     return 0;
   }
 
+  // Print ELF file info
   cout << "Object file type: " << get_type_name(elf_header->e_type) << endl;
   cout << "Instruction set: " << get_machine_name(elf_header->e_machine) << endl;
   cout << "Endianness: " << ((elf_header->e_ident[EI_DATA] == 1) ? "Little endian" : "Big Endian") << endl;
-
+  // Fine section headers and tables
   unsigned char* sh_data = (unsigned char*) elf_header + elf_header->e_shoff;  // Find section headers in ELF header
   Elf64_Shdr* section_name_table = &((Elf64_Shdr*)sh_data)[elf_header->e_shstrndx];  // Find the section of strtab w/ names of sections
   unsigned char* shstrtab_data = (unsigned char*) data + section_name_table->sh_offset;
@@ -73,7 +75,7 @@ int main(int argc, char **argv) {
   Elf64_Sym* sym_table = nullptr;
   int num_syms = 0;
 
-  // Scan throught section headers in ELF file
+  // Scan through section headers in ELF file
   for (int i = 0; i < elf_header->e_shnum; i++) {  
     Elf64_Shdr* section_headers = (Elf64_Shdr*) sh_data + i;
     std::string name((char*) (section_headers->sh_name + shstrtab_data));
@@ -91,10 +93,9 @@ int main(int argc, char **argv) {
       (long unsigned int) section_headers->sh_type, section_headers->sh_offset, section_headers->sh_size);
   }
 
-
-
   // if (sym_table == nullptr) cout << "uh-oh" << endl;
 
+  // Scan through each symbol in .sumtab and printing required into about each
   for (int i = 0; i < num_syms; i++) {
     char* name;
     if (sym_table->st_name != 0) name = (char*) (sym_table->st_name + strtab_data);

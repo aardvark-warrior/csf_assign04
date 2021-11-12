@@ -19,6 +19,9 @@ using std::cerr;
 
 #include "elf_names.h"
 
+void print_header_info(void* data, unsigned char*& strtab_data, int& num_syms, Elf64_Sym*& sym_table, Elf64_Ehdr* elf_header);
+void print_sym_info(int num_syms, Elf64_Sym* sym_table, unsigned char* strtab_data);
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     cerr << "ERROR: Invalid number of command args" << endl;
@@ -39,7 +42,6 @@ int main(int argc, char **argv) {
     return 3;
   }
   size_t file_size = statbuf.st_size;
-  // ...
 
   // Create private, read-only mapping to access file contents in memory
   void *data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -48,7 +50,7 @@ int main(int argc, char **argv) {
     return 4;
   }
 
-  Elf64_Ehdr *elf_header = (Elf64_Ehdr *) data;
+  Elf64_Ehdr *elf_header = (Elf64_Ehdr*) data;
 
   // Check if opened file is ELF
   if (elf_header->e_ident[0] != 127 ||
@@ -63,19 +65,33 @@ int main(int argc, char **argv) {
   cout << "Object file type: " << get_type_name(elf_header->e_type) << endl;
   cout << "Instruction set: " << get_machine_name(elf_header->e_machine) << endl;
   cout << "Endianness: " << ((elf_header->e_ident[EI_DATA] == 1) ? "Little endian" : "Big Endian") << endl;
-  // Fine section headers and tables
-  unsigned char* sh_data = (unsigned char*) elf_header + elf_header->e_shoff;  // Find section headers in ELF header
-  Elf64_Shdr* section_name_table = &((Elf64_Shdr*)sh_data)[elf_header->e_shstrndx];  // Find the section of strtab w/ names of sections
-  unsigned char* shstrtab_data = (unsigned char*) data + section_name_table->sh_offset;
+
   unsigned char* strtab_data = nullptr;
-
-  std::string symtab = ".symtab";
-  std::string strtab = ".strtab";
-
   Elf64_Sym* sym_table = nullptr;
   int num_syms = 0;
 
-  // Scan through section headers in ELF file
+  print_header_info(data, strtab_data, num_syms, sym_table, elf_header);
+  print_sym_info(num_syms, sym_table, strtab_data);
+
+  return 0;
+}
+
+/**
+ * Function to print section header data.
+ * @param data ELF data from memory mapping
+ * @param strtab_data ptr for string table to be read into
+ * @param num_syms integer to hold number of symbols
+ * @param sym_table ptr to hold symbol table data
+ * @param elf_header ELF file header data
+ */
+void print_header_info(void* data, unsigned char*& strtab_data, int& num_syms, Elf64_Sym*& sym_table, Elf64_Ehdr* elf_header) {
+  unsigned char* sh_data = (unsigned char*) elf_header + elf_header->e_shoff;  // Find section headers in ELF header
+  std::string symtab = ".symtab";
+  std::string strtab = ".strtab";
+
+  Elf64_Shdr* section_name_table = &((Elf64_Shdr*)sh_data)[elf_header->e_shstrndx];  // Find the section of strtab w/ names of sections
+  unsigned char* shstrtab_data = (unsigned char*) data + section_name_table->sh_offset;
+
   for (int i = 0; i < elf_header->e_shnum; i++) {  
     Elf64_Shdr* section_headers = (Elf64_Shdr*) sh_data + i;
     std::string name((char*) (section_headers->sh_name + shstrtab_data));
@@ -92,10 +108,15 @@ int main(int argc, char **argv) {
     printf(", type=%lx, offset=%lx, size=%lx\n", 
       (long unsigned int) section_headers->sh_type, section_headers->sh_offset, section_headers->sh_size);
   }
+}
 
-  // if (sym_table == nullptr) cout << "uh-oh" << endl;
-
-  // Scan through each symbol in .sumtab and printing required into about each
+/**
+ * Function to print the symbol table info.
+ * @param num_syms number of symbols
+ * @param sym_table symbol table data
+ * @param strtab_data string table data
+ */
+void print_sym_info(int num_syms, Elf64_Sym* sym_table, unsigned char* strtab_data) {
   for (int i = 0; i < num_syms; i++) {
     char* name;
     if (sym_table->st_name != 0) name = (char*) (sym_table->st_name + strtab_data);
@@ -104,6 +125,4 @@ int main(int argc, char **argv) {
       sym_table->st_size, (long unsigned int) sym_table->st_info, sym_table->st_other);
     sym_table++;
   }
-
-  return 0;
 }

@@ -42,13 +42,18 @@ Calc::~Calc() {
 int Calc::evalExpr(const std::string &expr, int &result) {
     std::vector<std::string> tokens = tokenize(expr);
     int type = token_type(tokens);
+
     if (!type) return 0;
+        // std::cout << "hey there" << std::endl;
+
 
     if (type == 1) result = get_val(tokens.at(0));
 
     else if (type == 2) {
         std::string op = tokens.at(1);
-        if (op == "+") result = get_val(tokens.at(0)) + get_val(tokens.at(2));
+        if (op == "+") {
+            result = get_val(tokens.at(0)) + get_val(tokens.at(2));
+        }
         else if (op == "-") result = get_val(tokens.at(0)) - get_val(tokens.at(2));
         else if (op == "*") result = get_val(tokens.at(0)) * get_val(tokens.at(2));
         else if (op == "/") {
@@ -73,7 +78,6 @@ int Calc::evalExpr(const std::string &expr, int &result) {
         }
         vars[tokens.at(0)] = result;
     }
-
     return 1;
 }
 
@@ -119,15 +123,19 @@ int Calc::token_type(std::vector<std::string> &tokens) {
         return 0;
     }
 
-        if (!var_is_valid(tokens.at(0))) return 0;
+    if (!var_is_valid(tokens.at(0))) return 0;
     if (tokens.size() == 1) return vars.find(tokens.at(0)) != vars.end();
-    if (tokens.at(1) != "=") return 0;
+    std::string op = tokens.at(1);
 
+    if (op != "=") {
+        if (tokens.size() == 3 && (op == "+" || op == "-" || op == "*" || op == "/")) return 2;
+        return 0;
+    }
 
     if (!str_is_num(tokens.at(2)) && (vars.find(tokens.at(2)) == vars.end())) return 0;
     if (tokens.size() == 3) return 3;
 
-    std::string op = tokens.at(3);
+    op = tokens.at(3);
     if (op != "+" && op != "-" && op != "*" && op != "/") return 0;
 
     if (!str_is_num(tokens.at(4)) && (vars.find(tokens.at(2)) == vars.end())) return 0;

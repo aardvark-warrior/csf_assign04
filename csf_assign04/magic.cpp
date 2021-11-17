@@ -1,3 +1,11 @@
+/*
+ * Implementation of main and helper functions for processing ELF (or non-ELF) files
+ * CSF Assignment 4
+ * M.Albert and A.Wang
+ * malber20@jhu.edu
+ * awang91@jhu.edu
+ */
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

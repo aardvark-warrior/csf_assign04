@@ -1,3 +1,11 @@
+/*
+ * Declaration of functions for ELF names
+ * CSF Assignment 4
+ * M.Albert and A.Wang
+ * malber20@jhu.edu
+ * awang91@jhu.edu
+ */
+
 #ifndef ELF_NAMES_H
 #define ELF_NAMES_H
 

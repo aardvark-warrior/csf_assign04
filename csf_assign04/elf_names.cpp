@@ -1,3 +1,11 @@
+/*
+ * Implementation of functions for ELF names
+ * CSF Assignment 4
+ * M.Albert and A.Wang
+ * malber20@jhu.edu
+ * awang91@jhu.edu
+ */
+
 #include "elf_names.h"
 
 struct MagicValue {

@@ -1,9 +1,100 @@
+/**CSF Assignment 5 Server 
+ * 
+ * Arthur Wang - awang91
+ * Mason Albert - malber20
+ * 
+ */
+
 #include <stdio.h>      /* for snprintf */
 #include "csapp.h"
 #include "calc.h"
+#define LINEBUF_SIZE 1024
 
-int main(int argc, char **argv) {
-	/* TODO: implement this program */
+int chat_with_client(struct Calc *calc, int client_fd);
+
+int main(int argc, char **argv) {	
+	if (argc != 2) { 
+		fprintf(stderr, "Usage: ./calcServer <port>\n"); 
+		return 1;
+	}
+
+	char* end_ptr = argv[1];
+	
+	while (*end_ptr != '\0') { end_ptr++; }
+
+	unsigned long tcp_port = strtoul(argv[1], &end_ptr, 0);
+
+	if (tcp_port == 0 && !((end_ptr == argv[1] + 1) && (*end_ptr == 0))) { // if 0 due to strtoul fail
+		fprintf(stderr, "Invalid format for port number\n");
+		return 2;
+	}
+	else if (tcp_port < 1024) {  // if invalid port number
+		fprintf(stderr, "Invalid port number\n");
+		return 3;
+	}
+
+	// Open server socket
+	int server_fd = open_listenfd(argv[1]);
+	if (server_fd < 0) { 
+		fprintf(stderr, "Couldn't open server socket\n"); 
+		return 4;
+	}
+
+	struct Calc* calculator = calc_create(); 
+	
+	int keep_going = 1;
+	while (keep_going) {
+		int client_fd = Accept(server_fd, NULL, NULL);
+		if (client_fd > 0) {
+			keep_going = chat_with_client(calculator, client_fd);
+			close(client_fd); // close the connection
+		}
+	}
+
+	calc_destroy(calculator);
+	close(server_fd); // close server socket
 
 	return 0;
+}
+
+int chat_with_client(struct Calc *calc, int client_fd) {
+	rio_t in;
+	char linebuf[LINEBUF_SIZE];
+
+	/* wrap standard input (which is file descriptor 0) */
+	rio_readinitb(&in, client_fd);
+
+	/*
+	 * Read lines of input, evaluate them as calculator expressions,
+	 * and (if evaluation was successful) print the result of each
+	 * expression.  Quit when "quit" command is received.
+	 */
+	int done = 0;
+	while (!done) {
+		ssize_t n = rio_readlineb(&in, linebuf, LINEBUF_SIZE);
+		if (n <= 0) {
+			/* error or end of input */
+			done = 1;
+		} else if (strcmp(linebuf, "quit\n") == 0 || strcmp(linebuf, "quit\r\n") == 0) {
+			/* quit command */
+			done = 1;
+		} else if (strcmp(linebuf, "shutdown\n") == 0 || strcmp(linebuf, "shutdown\r\n") == 0) {
+			/* quit command */
+			return 0;
+		} else {
+			/* process input line */
+			int result;
+			if (calc_eval(calc, linebuf, &result) == 0) {
+				/* expression couldn't be evaluated */
+				rio_writen(client_fd, "Error\n", 6);
+			} else {
+				/* output result */
+				int len = snprintf(linebuf, LINEBUF_SIZE, "%d\n", result);
+				if (len < LINEBUF_SIZE) {
+					rio_writen(client_fd, linebuf, len);
+				}
+			}
+		}
+	}
+	return 1;
 }

@@ -3,6 +3,9 @@
  *
  * This should work correctly once you have implemented
  * and tested your calc_ functions
+ * 
+ * Arthur Wang - awang91
+ * Mason Albert - malber20
  */
 
 #include <stdio.h>      /* for snprintf */

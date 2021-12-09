@@ -10,7 +10,38 @@
 #include "calc.h"
 #define LINEBUF_SIZE 1024
 
+// #include <cpthread>
+// int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void* (*start_routine) (void*), void* arg);
+// pthread_t pthread_self(void) // arg to detach
+// int pthread_detach(pthread_t thread);
+
 int chat_with_client(struct Calc *calc, int client_fd);
+
+/*
+ * Data structure representing a client connection.
+ */
+struct ConnInfo {
+	int client_fd;
+	struct Calc* calculator;
+	// int keep_going;
+};
+
+void *worker(void *arg) {
+	struct ConnInfo *info = arg;
+
+	/*
+	 * set thread as detached, so its resources are automatically
+	 * reclaimed when it finishes
+	 */
+	pthread_detach(pthread_self());
+
+	/* handle client request */
+	/*info->keep_going = */chat_with_client(info->calculator, info->client_fd);
+	close(info->client_fd);
+	free(info);
+
+	return NULL;
+}
 
 int main(int argc, char **argv) {	
 	if (argc != 2) { 
@@ -45,10 +76,26 @@ int main(int argc, char **argv) {
 	int keep_going = 1;
 	while (keep_going) {
 		int client_fd = Accept(server_fd, NULL, NULL);
-		if (client_fd > 0) {
-			keep_going = chat_with_client(calculator, client_fd);
-			close(client_fd); // close the connection
+		if (client_fd < 0) {
+			fprintf(stderr, "Error accepting client connection\n");
+			return 5;
 		}
+
+			/* create ConnInfo object */
+			struct ConnInfo *info = malloc(sizeof(struct ConnInfo));
+			info->client_fd = client_fd;
+			info->calculator = calculator;
+			// info->keep_going = keep_going;
+
+			/* start new thread to handle client connection */
+			pthread_t thr_id;
+			if (pthread_create(&thr_id, NULL, worker, info) != 0) {
+				fprintf(stderr, "Pthread_create failed\n"); 
+				return 6;
+			}
+			// keep_going = info->keep_going;
+			// keep_going = chat_with_client(calculator, client_fd);
+			// close(client_fd); // close the connection
 	}
 
 	calc_destroy(calculator);

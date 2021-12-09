@@ -88,6 +88,7 @@ int Calc::operand(std::vector<std::string> &tokens, int &result) {
  */
 int Calc::operand_op_operand(std::vector<std::string> &tokens, int &result) {
     std::string op = tokens.at(1);
+    if (!str_is_num(tokens.at(0)) && vars.find(tokens.at(0)) == vars.end()) return 0;
 
     // compute result
     if (op == "+") result = get_val(tokens.at(0)) + get_val(tokens.at(2));
@@ -183,7 +184,6 @@ int Calc::token_type(std::vector<std::string> &tokens) {
         if(str_is_num(tokens.at(2)) || vars.find(tokens.at(2)) != vars.end()) return 2;
         return 0;
     }
-
     if (!var_is_valid(tokens.at(0))) return 0; // var must be valid for case 3/4 or 2 with var
     if (tokens.size() == 1) return vars.find(tokens.at(0)) != vars.end(); // var must exist for case 1
     std::string op = tokens.at(1);

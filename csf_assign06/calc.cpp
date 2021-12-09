@@ -17,6 +17,7 @@ struct Calc {
 private:
     // fields
     std::map<std::string, int> vars;
+    pthread_mutex_t lock;
 
 public:
     // public member functions
@@ -42,14 +43,14 @@ private:
  * Default constructor. 
  */
 Calc::Calc() {
-    return;
+    pthread_mutex_init(&lock, NULL);
 }
 
 /**
  * Default destructor. 
  */
 Calc::~Calc() {
-    return;
+    pthread_mutex_destroy(&lock);
 }
 
 /**
@@ -59,14 +60,19 @@ Calc::~Calc() {
  * @return 1 if valid expresion, else 0
  */ 
 int Calc::evalExpr(const std::string &expr, int &result) {
+    pthread_mutex_lock(&lock);
     std::vector<std::string> tokens = tokenize(expr);
     int type = token_type(tokens);
 
-    if (!type) return 0; // invalid expr
-    if (type == 1) return operand(tokens, result); // operand
-    else if (type == 2) return operand_op_operand(tokens, result); // operand op operand
-    else if (type == 3) return var_eq_operand(tokens, result); // var = operand 
-    else return var_eq_operand_op_operand(tokens, result); // var = operand op operand
+    int return_code;
+    if (!type) return_code = 0; // invalid expr
+    else if (type == 1) return_code = operand(tokens, result); // operand
+    else if (type == 2) return_code = operand_op_operand(tokens, result); // operand op operand
+    else if (type == 3) return_code = var_eq_operand(tokens, result); // var = operand 
+    else return_code = var_eq_operand_op_operand(tokens, result); // var = operand op operand
+
+    pthread_mutex_unlock(&lock);
+    return return_code;
 }
 
 /** 

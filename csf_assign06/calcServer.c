@@ -23,7 +23,6 @@ int chat_with_client(struct Calc *calc, int client_fd);
 struct ConnInfo {
 	int client_fd;
 	struct Calc* calculator;
-	// int keep_going;
 };
 
 void *worker(void *arg) {
@@ -36,7 +35,7 @@ void *worker(void *arg) {
 	pthread_detach(pthread_self());
 
 	/* handle client request */
-	/*info->keep_going = */chat_with_client(info->calculator, info->client_fd);
+	chat_with_client(info->calculator, info->client_fd);
 	close(info->client_fd);
 	free(info);
 
@@ -81,21 +80,18 @@ int main(int argc, char **argv) {
 			return 5;
 		}
 
-			/* create ConnInfo object */
-			struct ConnInfo *info = malloc(sizeof(struct ConnInfo));
-			info->client_fd = client_fd;
-			info->calculator = calculator;
-			// info->keep_going = keep_going;
+		/* create ConnInfo object */
+		struct ConnInfo *info = malloc(sizeof(struct ConnInfo));
+		info->client_fd = client_fd;
+		info->calculator = calculator;
+		// info->keep_going = keep_going;
 
-			/* start new thread to handle client connection */
-			pthread_t thr_id;
-			if (pthread_create(&thr_id, NULL, worker, info) != 0) {
-				fprintf(stderr, "Pthread_create failed\n"); 
-				return 6;
-			}
-			// keep_going = info->keep_going;
-			// keep_going = chat_with_client(calculator, client_fd);
-			// close(client_fd); // close the connection
+		/* start new thread to handle client connection */
+		pthread_t thr_id;
+		if (pthread_create(&thr_id, NULL, worker, info) != 0) {
+			fprintf(stderr, "Pthread_create failed\n"); 
+			return 6;
+		}
 	}
 
 	calc_destroy(calculator);

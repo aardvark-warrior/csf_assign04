@@ -10,11 +10,6 @@
 #include "calc.h"
 #define LINEBUF_SIZE 1024
 
-// #include <cpthread>
-// int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void* (*start_routine) (void*), void* arg);
-// pthread_t pthread_self(void) // arg to detach
-// int pthread_detach(pthread_t thread);
-
 int chat_with_client(struct Calc *calc, int client_fd);
 
 /*
@@ -84,7 +79,6 @@ int main(int argc, char **argv) {
 		struct ConnInfo *info = malloc(sizeof(struct ConnInfo));
 		info->client_fd = client_fd;
 		info->calculator = calculator;
-		// info->keep_going = keep_going;
 
 		/* start new thread to handle client connection */
 		pthread_t thr_id;

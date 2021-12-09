@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 		pthread_t thr_id;
 		if (pthread_create(&thr_id, NULL, worker, info) != 0) {
 			fprintf(stderr, "Pthread_create failed\n"); 
-			return 6;
+			// return 6;
 		}
 	}
 

@@ -63,7 +63,6 @@ int Calc::evalExpr(const std::string &expr, int &result) {
     pthread_mutex_lock(&lock);
     std::vector<std::string> tokens = tokenize(expr);
     int type = token_type(tokens);
-
     int return_code;
     if (!type) return_code = 0; // invalid expr
     else if (type == 1) return_code = operand(tokens, result); // operand
@@ -95,6 +94,7 @@ int Calc::operand(std::vector<std::string> &tokens, int &result) {
 int Calc::operand_op_operand(std::vector<std::string> &tokens, int &result) {
     std::string op = tokens.at(1);
     if (!str_is_num(tokens.at(0)) && vars.find(tokens.at(0)) == vars.end()) return 0;
+    else if ((!str_is_num(tokens.at(2)) && vars.find(tokens.at(2)) == vars.end())) return 0;
 
     // compute result
     if (op == "+") result = get_val(tokens.at(0)) + get_val(tokens.at(2));

@@ -86,6 +86,11 @@ int Calc::operand(std::vector<std::string> &tokens, int &result) {
     return 1;
 }
 
+/**
+ * Determine if a string is a valid operand.
+ * @param str string operand
+ * @return 1 if valid operand, else 0
+ */
 int Calc::is_operand(std::string &str) {
     return str_is_num(str) || vars.find(str) != vars.end();
 }

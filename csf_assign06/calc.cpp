@@ -37,6 +37,7 @@ private:
     int operand_op_operand(std::vector<std::string> &tokens, int &result);
     int var_eq_operand(std::vector<std::string> &tokens, int &result);
     int var_eq_operand_op_operand(std::vector<std::string> &tokens, int &result);
+    int is_operand(std::string &str);
 };
 
 /**
@@ -83,6 +84,10 @@ int Calc::evalExpr(const std::string &expr, int &result) {
 int Calc::operand(std::vector<std::string> &tokens, int &result) {
     result = get_val(tokens.at(0)); // get value of int/variable
     return 1;
+}
+
+int Calc::is_operand(std::string &str) {
+    return str_is_num(str) || vars.find(str) != vars.end();
 }
 
 /** 
@@ -180,37 +185,31 @@ std::vector<std::string> Calc::tokenize(const std::string &expr) {
  *  case 4: var = operand op operand
  */
 int Calc::token_type(std::vector<std::string> &tokens) {
-    if (tokens.size() != 1 && tokens.size() != 3 && tokens.size() != 5) return 0; // invalid if wrong length
-    if (str_is_num(tokens.at(0))) { // can only be case 1 or 2
-        if (tokens.size() == 1) return 1; // case 1 valid
-        if (tokens.size() == 5) return 0;
+
+
+    if (tokens.size() == 1) {
+        if (is_operand(tokens.at(0))) {
+            return 1;
+        }
+        return 0;
+    } else if (tokens.size() == 3) {
         std::string op = tokens.at(1);
-        // case 2 if valid variable/num and operator '='
-        if (op != "+" && op != "-" && op != "*" && op != "/") return 0;
-        if(str_is_num(tokens.at(2)) || vars.find(tokens.at(2)) != vars.end()) return 2;
-        return 0;
-    }
-    if (!var_is_valid(tokens.at(0))) return 0; // var must be valid for case 3/4 or 2 with var
-    if (tokens.size() == 1) return vars.find(tokens.at(0)) != vars.end(); // var must exist for case 1
-    std::string op = tokens.at(1);
-
-    // check token validity
-    if (op != "=") {
-        if (tokens.size() == 3 && (op == "+" || op == "-" || op == "*" || op == "/")) return 2;
-        return 0;
-    }
-
-    // case 3 check validity of operand
-    if (!str_is_num(tokens.at(2)) && (vars.find(tokens.at(2)) == vars.end())) return 0;
-    if (tokens.size() == 3) return 3;
-
-    // case 4 check validity of operand and operator
-    op = tokens.at(3);
-    if (op != "+" && op != "-" && op != "*" && op != "/") return 0;
-
-    if (!str_is_num(tokens.at(4)) && (vars.find(tokens.at(2)) == vars.end())) return 0;
-    return 4;
+        if (var_is_valid(tokens.at(0)) && op == "=" && is_operand(tokens.at(2))) {
+            return 3;
+        } else if (is_operand(tokens.at(0)) && is_operand(tokens.at(2)) && 
+            (op == "+" || op == "-" || op == "/" || op == "*")) {
+            return 2;
+        } else return 0;
+    } else if (tokens.size() == 5) {
+        std::string op = tokens.at(3);
+        if (var_is_valid(tokens.at(0)) && is_operand(tokens.at(2)) && is_operand(tokens.at(4)) &&
+            tokens.at(1) == "=" && (op == "+" || op == "-" || op == "/" || op == "*")) {
+                return 4;
+            }
+    } else return 0;
+    return 0;
 }
+
 /**
  * Helper function to determine if variable name is valid.
  * @param var variable name as a string
